@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SEVERITY_LEVELS } from '../constants/severity';
+import { ThemeColors } from '../theme/colors';
+import { useThemedStyles } from '../theme/useTheme';
 import { Severity } from '../types/log';
 
 interface SeveritySelectorProps {
@@ -8,6 +10,8 @@ interface SeveritySelectorProps {
 }
 
 export default function SeveritySelector({ value, onChange }: SeveritySelectorProps) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View>
       <View style={styles.row}>
@@ -42,34 +46,36 @@ export default function SeveritySelector({ value, onChange }: SeveritySelectorPr
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  circle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  pressed: {
-    transform: [{ scale: 0.9 }],
-  },
-  number: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  hintRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
-  },
-  hint: {
-    fontSize: 12,
-    color: '#777',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    circle: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    pressed: {
+      transform: [{ scale: 0.9 }],
+    },
+    number: {
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    hintRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 6,
+    },
+    hint: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+  });

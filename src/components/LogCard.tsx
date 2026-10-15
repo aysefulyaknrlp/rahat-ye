@@ -8,13 +8,24 @@ import {
 import { getSeverityColor } from '../constants/severity';
 import { LogEntry, SyncStatus } from '../types/log';
 import { formatDateTime } from '../utils/formatDate';
+import { ThemeColors } from '../theme/colors';
+import { useThemeColors, useThemedStyles } from '../theme/useTheme';
 
-// Her gönderim durumunun yazısı ve renkleri
-const STATUS_STYLES: Record<SyncStatus, { label: string; color: string; background: string }> = {
-  pending: { label: '⏳ Gönderilmeyi bekliyor', color: '#8D6E00', background: '#FFF8E1' },
-  synced: { label: '✅ Gönderildi', color: '#1B5E20', background: '#E8F5E9' },
-  failed: { label: '⚠️ Gönderilemedi', color: '#B71C1C', background: '#FFEBEE' },
-};
+// Her gönderim durumunun yazısı ve renkleri (tema renklerinden)
+function getStatusStyle(status: SyncStatus, colors: ThemeColors) {
+  switch (status) {
+    case 'pending':
+      return {
+        label: '⏳ Gönderilmeyi bekliyor',
+        color: colors.warningText,
+        background: colors.warningBackground,
+      };
+    case 'synced':
+      return { label: '✅ Gönderildi', color: colors.successText, background: colors.successBackground };
+    case 'failed':
+      return { label: '⚠️ Gönderilemedi', color: colors.dangerText, background: colors.dangerBackground };
+  }
+}
 
 interface LogCardProps {
   log: LogEntry;
@@ -24,7 +35,9 @@ interface LogCardProps {
 }
 
 export default function LogCard({ log, isSyncing = false, onRetry, onLongPress }: LogCardProps) {
-  const status = STATUS_STYLES[log.status];
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+  const status = getStatusStyle(log.status, colors);
 
   return (
     <Pressable
@@ -74,7 +87,7 @@ export default function LogCard({ log, isSyncing = false, onRetry, onLongPress }
         {isSyncing ? (
           // Gönderiliyorsa: dönen animasyon
           <View style={styles.syncing}>
-            <ActivityIndicator size="small" color="#0D47A1" />
+            <ActivityIndicator size="small" color={colors.infoText} />
             <Text style={styles.syncingText}>Gönderiliyor...</Text>
           </View>
         ) : (
@@ -100,108 +113,110 @@ export default function LogCard({ log, isSyncing = false, onRetry, onLongPress }
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#ECECEC',
-    gap: 10,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  titleBox: {
-    flex: 1,
-    gap: 2,
-  },
-  foodName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-  meta: {
-    fontSize: 13,
-    color: '#777',
-  },
-  severityBadge: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  severityNumber: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  severityCaption: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    fontSize: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  triggerTag: {
-    backgroundColor: '#FFF3E0',
-    color: '#E65100',
-  },
-  symptomTag: {
-    backgroundColor: '#E3F2FD',
-    color: '#0D47A1',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  syncing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#0D47A1',
-  },
-  retryButton: {
-    backgroundColor: '#C62828',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      gap: 10,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+    },
+    titleBox: {
+      flex: 1,
+      gap: 2,
+    },
+    foodName: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    meta: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    severityBadge: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+    },
+    severityNumber: {
+      color: '#fff',
+      fontSize: 20,
+      fontWeight: '800',
+    },
+    severityCaption: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    tagRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    tag: {
+      fontSize: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    triggerTag: {
+      backgroundColor: colors.triggerBackground,
+      color: colors.triggerText,
+    },
+    symptomTag: {
+      backgroundColor: colors.infoBackground,
+      color: colors.infoText,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    syncing: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    syncingText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.infoText,
+    },
+    retryButton: {
+      backgroundColor: colors.danger,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    retryText: {
+      color: colors.onPrimary,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    statusBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 8,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+  });

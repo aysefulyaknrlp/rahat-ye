@@ -1,13 +1,20 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ThemeColors } from '../theme/colors';
+import { useThemeColors } from '../theme/useTheme';
 
 export type BannerType = 'info' | 'success' | 'error';
 
-// Her tipin renkleri ve ikonu
-const BANNER_STYLES: Record<BannerType, { color: string; background: string; icon: string }> = {
-  info: { color: '#0D47A1', background: '#E3F2FD', icon: '' },
-  success: { color: '#1B5E20', background: '#E8F5E9', icon: '✅' },
-  error: { color: '#B71C1C', background: '#FFEBEE', icon: '⚠️' },
-};
+// Her tipin renkleri ve ikonu (tema renklerinden)
+function getBannerStyle(type: BannerType, colors: ThemeColors) {
+  switch (type) {
+    case 'info':
+      return { color: colors.infoText, background: colors.infoBackground, icon: '' };
+    case 'success':
+      return { color: colors.successText, background: colors.successBackground, icon: '✅' };
+    case 'error':
+      return { color: colors.dangerText, background: colors.dangerBackground, icon: '⚠️' };
+  }
+}
 
 interface StatusBannerProps {
   type: BannerType;
@@ -17,7 +24,8 @@ interface StatusBannerProps {
 }
 
 export default function StatusBanner({ type, message, actionLabel, onAction }: StatusBannerProps) {
-  const style = BANNER_STYLES[type];
+  const colors = useThemeColors();
+  const style = getBannerStyle(type, colors);
 
   return (
     <View

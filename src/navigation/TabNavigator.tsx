@@ -5,6 +5,8 @@ import FloatingTabBar from '../components/FloatingTabBar';
 import HistoryScreen from '../screens/HistoryScreen';
 import LogScreen from '../screens/LogScreen';
 import { useLogStore } from '../store/useLogStore';
+import { ThemeColors } from '../theme/colors';
+import { useThemedStyles } from '../theme/useTheme';
 
 // Hangi sekmeler var? (Hiçbiri parametre almıyor → undefined)
 export type RootTabParamList = {
@@ -16,6 +18,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function TabNavigator() {
   const unseenCount = useLogStore((state) => state.unseenCount);
+  const styles = useThemedStyles(createStyles);
 
   return (
     <Tab.Navigator
@@ -53,24 +56,26 @@ export default function TabNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-  scene: {
-    backgroundColor: '#F7F7F7',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    header: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderBottomLeftRadius: 24,
+      borderBottomRightRadius: 24,
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    headerTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    scene: {
+      backgroundColor: colors.background,
+    },
+  });

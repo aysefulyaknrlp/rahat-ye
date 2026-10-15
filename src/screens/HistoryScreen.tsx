@@ -3,9 +3,12 @@ import { useCallback, useMemo } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import LogCard from '../components/LogCard';
 import { useLogStore } from '../store/useLogStore';
+import { ThemeColors } from '../theme/colors';
+import { useThemedStyles } from '../theme/useTheme';
 import { LogEntry } from '../types/log';
 
 export default function HistoryScreen() {
+  const styles = useThemedStyles(createStyles);
   const logs = useLogStore((state) => state.logs);
   const removeLog = useLogStore((state) => state.removeLog);
   const markAllSeen = useLogStore((state) => state.markAllSeen);
@@ -91,68 +94,71 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    flexGrow: 1,
-    padding: 16,
-    paddingBottom: 120, // Alttaki yüzen menünün arkasında kalmasın
-    backgroundColor: '#F7F7F7',
-  },
-  separator: {
-    height: 12,
-  },
-  headerBox: {
-    gap: 10,
-    marginBottom: 12,
-  },
-  header: {
-    fontSize: 13,
-    color: '#777',
-  },
-  failedBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#FFEBEE',
-  },
-  failedText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#B71C1C',
-  },
-  failedButton: {
-    backgroundColor: '#C62828',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  failedButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#777',
-    textAlign: 'center',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    list: {
+      flexGrow: 1,
+      padding: 16,
+      paddingBottom: 120, // Alttaki yüzen menünün arkasında kalmasın
+      backgroundColor: colors.background,
+    },
+    separator: {
+      height: 12,
+    },
+    headerBox: {
+      gap: 10,
+      marginBottom: 12,
+    },
+    header: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    failedBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: colors.dangerBackground,
+    },
+    failedText: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.dangerText,
+    },
+    failedButton: {
+      backgroundColor: colors.danger,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    failedButtonText: {
+      color: colors.onPrimary,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+    empty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    emptyEmoji: {
+      fontSize: 48,
+    },
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+  });

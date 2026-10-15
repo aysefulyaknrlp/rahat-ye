@@ -18,6 +18,8 @@ import StatusBanner, { BannerType } from '../components/StatusBanner';
 import { CATEGORY_OPTIONS, SYMPTOM_OPTIONS, TRIGGER_OPTIONS } from '../constants/options';
 import type { RootTabParamList } from '../navigation/TabNavigator';
 import { useLogStore } from '../store/useLogStore';
+import { ThemeColors } from '../theme/colors';
+import { useThemeColors, useThemedStyles } from '../theme/useTheme';
 import { MealCategory, Severity, Symptom, TriggerTag } from '../types/log';
 import { toggleItem } from '../utils/toggleItem';
 import { FOOD_NAME_MAX_LENGTH, validateLogForm } from '../utils/validation';
@@ -31,6 +33,9 @@ interface BannerState {
 }
 
 export default function LogScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
+
   // Store'dan sadece ihtiyacımız olanları alıyoruz
   const addLog = useLogStore((state) => state.addLog);
   const syncLog = useLogStore((state) => state.syncLog);
@@ -135,7 +140,7 @@ export default function LogScreen() {
         <TextInput
           style={[styles.input, showFoodNameError && styles.inputError]}
           placeholder="Örn. Mercimek çorbası"
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textSubtle}
           value={foodName}
           onChangeText={setFoodName}
           onBlur={() => setFoodNameTouched(true)}
@@ -238,69 +243,73 @@ export default function LogScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    padding: 24,
-    paddingBottom: 120, // Alttaki yüzen menünün arkasında kalmasın
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#666',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#C8C8C8',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  inputError: {
-    borderColor: '#C62828',
-  },
-  errorText: {
-    color: '#C62828',
-    fontSize: 13,
-    marginTop: 6,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  footer: {
-    marginTop: 32,
-  },
-  banner: {
-    marginBottom: 12,
-  },
-  devTools: {
-    marginTop: 24,
-  },
-  missingBox: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: '#FFF8E1',
-  },
-  missingTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#8D6E00',
-    marginBottom: 4,
-  },
-  missingItem: {
-    fontSize: 13,
-    color: '#8D6E00',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    container: {
+      padding: 24,
+      paddingBottom: 120, // Alttaki yüzen menünün arkasında kalmasın
+    },
+    subtitle: {
+      fontSize: 15,
+      color: colors.textMuted,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginTop: 24,
+      marginBottom: 10,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    inputError: {
+      borderColor: colors.danger,
+    },
+    errorText: {
+      color: colors.danger,
+      fontSize: 13,
+      marginTop: 6,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    footer: {
+      marginTop: 32,
+    },
+    banner: {
+      marginBottom: 12,
+    },
+    devTools: {
+      marginTop: 24,
+    },
+    missingBox: {
+      marginTop: 12,
+      padding: 12,
+      borderRadius: 10,
+      backgroundColor: colors.warningBackground,
+    },
+    missingTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.warningText,
+      marginBottom: 4,
+    },
+    missingItem: {
+      fontSize: 13,
+      color: colors.warningText,
+    },
+  });

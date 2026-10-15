@@ -1,11 +1,15 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemeColors } from '../theme/colors';
+import { useThemeColors, useThemedStyles } from '../theme/useTheme';
 
 // Ekranın altında, ortada yüzen hap şeklinde sekme menüsü
 export default function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   // Telefonun alt kısmındaki güvenli alan (iPhone'daki alt çizgi gibi)
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View
@@ -17,7 +21,7 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
           const { options } = descriptors[route.key];
           const focused = state.index === index; // Bu sekme açık mı?
           const label = options.title ?? route.name;
-          const color = focused ? '#fff' : '#555';
+          const color = focused ? colors.onPrimary : colors.textMuted;
 
           function onPress() {
             // React Navigation'a "sekmeye basıldı" diye haber ver
@@ -60,55 +64,57 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  bar: {
-    flexDirection: 'row',
-    gap: 6,
-    padding: 6,
-    borderRadius: 32,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 26,
-  },
-  tabFocused: {
-    backgroundColor: '#2E7D32',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  badge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 5,
-    borderRadius: 10,
-    backgroundColor: '#C62828',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-});
+// Stiller tema renklerine göre üretiliyor
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    bar: {
+      flexDirection: 'row',
+      gap: 6,
+      padding: 6,
+      borderRadius: 32,
+      backgroundColor: colors.surface,
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 8,
+    },
+    tab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      paddingHorizontal: 18,
+      borderRadius: 26,
+    },
+    tabFocused: {
+      backgroundColor: colors.primary,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    badge: {
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 5,
+      borderRadius: 10,
+      backgroundColor: colors.danger,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeText: {
+      color: colors.onPrimary,
+      fontSize: 11,
+      fontWeight: '700',
+    },
+  });
