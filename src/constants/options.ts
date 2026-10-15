@@ -18,3 +18,11 @@ export const SYMPTOM_OPTIONS: { value: Symptom; label: string }[] = [
   { value: 'reflux', label: 'Reflux / Reflü' },
   { value: 'cramp', label: 'Stomach Cramp / Mide Krampı' },
 ];
+
+// Bir değerin ekranda görünecek yazısını bulur. Örn: 'spicy' → 'Spicy / Acılı'
+export function getOptionLabel<T extends string>(
+  options: { value: T; label: string }[],
+  value: T,
+): string {
+  return options.find((option) => option.value === value)?.label ?? value;
+}

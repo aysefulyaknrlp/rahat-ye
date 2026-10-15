@@ -1,11 +1,12 @@
+import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import LogScreen from './src/screens/LogScreen';
+import TabNavigator from './src/navigation/TabNavigator';
 
 export default function App() {
   return (
-    <>
-      <LogScreen />
+    <NavigationContainer>
+      <TabNavigator />
       <StatusBar style="auto" />
-    </>
+    </NavigationContainer>
   );
 }

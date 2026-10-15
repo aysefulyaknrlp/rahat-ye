@@ -1,14 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SEVERITY_LEVELS } from '../constants/severity';
 import { Severity } from '../types/log';
-
-// Hafiften şiddetliye doğru yeşilden kırmızıya renkler
-const LEVELS: { value: Severity; color: string }[] = [
-  { value: 1, color: '#2E7D32' },
-  { value: 2, color: '#7CB342' },
-  { value: 3, color: '#F9A825' },
-  { value: 4, color: '#EF6C00' },
-  { value: 5, color: '#C62828' },
-];
 
 interface SeveritySelectorProps {
   value: Severity | null;
@@ -19,7 +11,7 @@ export default function SeveritySelector({ value, onChange }: SeveritySelectorPr
   return (
     <View>
       <View style={styles.row}>
-        {LEVELS.map((level) => {
+        {SEVERITY_LEVELS.map((level) => {
           const selected = value === level.value;
           return (
             <Pressable

@@ -1,3 +1,5 @@
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
   Alert,
@@ -13,6 +15,7 @@ import Chip from '../components/Chip';
 import PrimaryButton from '../components/PrimaryButton';
 import SeveritySelector from '../components/SeveritySelector';
 import { CATEGORY_OPTIONS, SYMPTOM_OPTIONS, TRIGGER_OPTIONS } from '../constants/options';
+import type { RootTabParamList } from '../navigation/TabNavigator';
 import { useLogStore } from '../store/useLogStore';
 import { MealCategory, Severity, Symptom, TriggerTag } from '../types/log';
 import { toggleItem } from '../utils/toggleItem';
@@ -21,7 +24,9 @@ import { FOOD_NAME_MAX_LENGTH, validateLogForm } from '../utils/validation';
 export default function LogScreen() {
   // Store'dan sadece ihtiyacımız olanları alıyoruz
   const addLog = useLogStore((state) => state.addLog);
-  const logCount = useLogStore((state) => state.logs.length);
+
+  // Ekranlar arası geçiş için
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
 
   // Formun hafızası (state)
   const [foodName, setFoodName] = useState('');
@@ -60,7 +65,10 @@ export default function LogScreen() {
       severity,
     });
 
-    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" telefonuna kaydedildi.`);
+    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" telefonuna kaydedildi.`, [
+      { text: 'Tamam' },
+      { text: 'Geçmişe Git', onPress: () => navigation.navigate('History') },
+    ]);
     resetForm();
   }
 
@@ -73,11 +81,9 @@ export default function LogScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Öğün Kaydet 🌿</Text>
         <Text style={styles.subtitle}>
           Ne yediğini ve sonrasında nasıl hissettiğini kaydet.
         </Text>
-        <Text style={styles.counter}>📋 Kayıtlı öğün: {logCount}</Text>
 
         {/* Yemek adı */}
         <Text style={styles.sectionTitle}>Yemek Adı *</Text>
@@ -162,23 +168,11 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 24,
-    paddingTop: 72,
-    paddingBottom: 48,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    paddingBottom: 120, // Alttaki yüzen menünün arkasında kalmasın
   },
   subtitle: {
     fontSize: 15,
     color: '#666',
-    marginTop: 4,
-  },
-  counter: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2E7D32',
-    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,
