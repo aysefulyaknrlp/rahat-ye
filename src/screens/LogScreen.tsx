@@ -13,11 +13,16 @@ import Chip from '../components/Chip';
 import PrimaryButton from '../components/PrimaryButton';
 import SeveritySelector from '../components/SeveritySelector';
 import { CATEGORY_OPTIONS, SYMPTOM_OPTIONS, TRIGGER_OPTIONS } from '../constants/options';
+import { useLogStore } from '../store/useLogStore';
 import { MealCategory, Severity, Symptom, TriggerTag } from '../types/log';
 import { toggleItem } from '../utils/toggleItem';
 import { FOOD_NAME_MAX_LENGTH, validateLogForm } from '../utils/validation';
 
 export default function LogScreen() {
+  // Store'dan sadece ihtiyacımız olanları alıyoruz
+  const addLog = useLogStore((state) => state.addLog);
+  const logCount = useLogStore((state) => state.logs.length);
+
   // Formun hafızası (state)
   const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState<MealCategory | null>(null);
@@ -43,9 +48,19 @@ export default function LogScreen() {
   }
 
   function handleSave() {
-    if (!isValid) return;
-    // Şimdilik sadece mesaj gösteriyoruz. Adım 6'da gerçekten kaydedeceğiz.
-    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" kaydedildi.`);
+    // category ve severity'nin null olmadığını TypeScript'e de kanıtlıyoruz
+    if (!isValid || category === null || severity === null) return;
+
+    // Kaydı store'a ekle → store da otomatik olarak telefona (AsyncStorage) yazar
+    addLog({
+      foodName: foodName.trim(),
+      category,
+      triggers,
+      symptoms,
+      severity,
+    });
+
+    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" telefonuna kaydedildi.`);
     resetForm();
   }
 
@@ -62,6 +77,7 @@ export default function LogScreen() {
         <Text style={styles.subtitle}>
           Ne yediğini ve sonrasında nasıl hissettiğini kaydet.
         </Text>
+        <Text style={styles.counter}>📋 Kayıtlı öğün: {logCount}</Text>
 
         {/* Yemek adı */}
         <Text style={styles.sectionTitle}>Yemek Adı *</Text>
@@ -157,6 +173,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#666',
     marginTop: 4,
+  },
+  counter: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2E7D32',
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,

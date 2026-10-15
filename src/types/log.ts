@@ -24,3 +24,6 @@ export interface LogEntry {
   createdAt: string;
   status: SyncStatus;
 }
+
+// Formdan gelen bilgiler: id, tarih ve durum henüz yok, onları store ekleyecek
+export type NewLogInput = Omit<LogEntry, 'id' | 'createdAt' | 'status'>;
