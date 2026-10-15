@@ -1,79 +1,162 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import Chip from '../components/Chip';
+import PrimaryButton from '../components/PrimaryButton';
+import SeveritySelector from '../components/SeveritySelector';
 import { CATEGORY_OPTIONS, SYMPTOM_OPTIONS, TRIGGER_OPTIONS } from '../constants/options';
-import { MealCategory, Symptom, TriggerTag } from '../types/log';
-
-// Listede varsa çıkarır, yoksa ekler
-function toggleItem<T>(list: T[], item: T): T[] {
-  if (list.includes(item)) {
-    return list.filter((x) => x !== item);
-  }
-  return [...list, item];
-}
+import { MealCategory, Severity, Symptom, TriggerTag } from '../types/log';
+import { toggleItem } from '../utils/toggleItem';
+import { FOOD_NAME_MAX_LENGTH, validateLogForm } from '../utils/validation';
 
 export default function LogScreen() {
+  // Formun hafızası (state)
+  const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState<MealCategory | null>(null);
   const [triggers, setTriggers] = useState<TriggerTag[]>([]);
   const [symptoms, setSymptoms] = useState<Symptom[]>([]);
+  const [severity, setSeverity] = useState<Severity | null>(null);
+
+  // Kullanıcı yemek adı kutusuna dokunup çıktı mı?
+  const [foodNameTouched, setFoodNameTouched] = useState(false);
+
+  // Her çizimde formu yeniden kontrol et
+  const errors = validateLogForm({ foodName, category, severity });
+  const isValid = Object.keys(errors).length === 0;
+  const showFoodNameError = foodNameTouched && errors.foodName !== undefined;
+
+  function resetForm() {
+    setFoodName('');
+    setCategory(null);
+    setTriggers([]);
+    setSymptoms([]);
+    setSeverity(null);
+    setFoodNameTouched(false);
+  }
+
+  function handleSave() {
+    if (!isValid) return;
+    // Şimdilik sadece mesaj gösteriyoruz. Adım 6'da gerçekten kaydedeceğiz.
+    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" kaydedildi.`);
+    resetForm();
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Öğün Kaydet 🌿</Text>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Öğün Kaydet 🌿</Text>
+        <Text style={styles.subtitle}>
+          Ne yediğini ve sonrasında nasıl hissettiğini kaydet.
+        </Text>
 
-      <Text style={styles.sectionTitle}>Kategori</Text>
-      <View style={styles.chipRow}>
-        {CATEGORY_OPTIONS.map((option) => (
-          <Chip
-            key={option.value}
-            label={option.label}
-            selected={category === option.value}
-            onPress={() => setCategory(category === option.value ? null : option.value)}
-          />
-        ))}
-      </View>
+        {/* Yemek adı */}
+        <Text style={styles.sectionTitle}>Yemek Adı *</Text>
+        <TextInput
+          style={[styles.input, showFoodNameError && styles.inputError]}
+          placeholder="Örn. Mercimek çorbası"
+          placeholderTextColor="#999"
+          value={foodName}
+          onChangeText={setFoodName}
+          onBlur={() => setFoodNameTouched(true)}
+          maxLength={FOOD_NAME_MAX_LENGTH}
+          returnKeyType="done"
+        />
+        {showFoodNameError && <Text style={styles.errorText}>{errors.foodName}</Text>}
 
-      <Text style={styles.sectionTitle}>Tetikleyiciler</Text>
-      <View style={styles.chipRow}>
-        {TRIGGER_OPTIONS.map((option) => (
-          <Chip
-            key={option.value}
-            label={option.label}
-            selected={triggers.includes(option.value)}
-            onPress={() => setTriggers(toggleItem(triggers, option.value))}
-          />
-        ))}
-      </View>
+        {/* Kategori: tek seçim */}
+        <Text style={styles.sectionTitle}>Kategori *</Text>
+        <View style={styles.chipRow}>
+          {CATEGORY_OPTIONS.map((option) => (
+            <Chip
+              key={option.value}
+              label={option.label}
+              selected={category === option.value}
+              onPress={() => setCategory(category === option.value ? null : option.value)}
+            />
+          ))}
+        </View>
 
-      <Text style={styles.sectionTitle}>Semptomlar</Text>
-      <View style={styles.chipRow}>
-        {SYMPTOM_OPTIONS.map((option) => (
-          <Chip
-            key={option.value}
-            label={option.label}
-            selected={symptoms.includes(option.value)}
-            onPress={() => setSymptoms(toggleItem(symptoms, option.value))}
-          />
-        ))}
-      </View>
+        {/* Tetikleyiciler: çoklu seçim */}
+        <Text style={styles.sectionTitle}>Tetikleyiciler</Text>
+        <View style={styles.chipRow}>
+          {TRIGGER_OPTIONS.map((option) => (
+            <Chip
+              key={option.value}
+              label={option.label}
+              selected={triggers.includes(option.value)}
+              onPress={() => setTriggers(toggleItem(triggers, option.value))}
+            />
+          ))}
+        </View>
 
-      {/* Geçici: state'in nasıl değiştiğini görmek için */}
-      <Text style={styles.debug}>
-        {JSON.stringify({ category, triggers, symptoms }, null, 2)}
-      </Text>
-    </ScrollView>
+        {/* Semptomlar: çoklu seçim */}
+        <Text style={styles.sectionTitle}>Semptomlar</Text>
+        <View style={styles.chipRow}>
+          {SYMPTOM_OPTIONS.map((option) => (
+            <Chip
+              key={option.value}
+              label={option.label}
+              selected={symptoms.includes(option.value)}
+              onPress={() => setSymptoms(toggleItem(symptoms, option.value))}
+            />
+          ))}
+        </View>
+
+        {/* Şiddet derecesi: 1-5 */}
+        <Text style={styles.sectionTitle}>Şiddet Derecesi *</Text>
+        <SeveritySelector value={severity} onChange={setSeverity} />
+
+        {/* Kaydet */}
+        <View style={styles.footer}>
+          <PrimaryButton title="Kaydet" onPress={handleSave} disabled={!isValid} />
+
+          {!isValid && (
+            <View style={styles.missingBox}>
+              <Text style={styles.missingTitle}>Kaydetmek için:</Text>
+              {Object.values(errors).map((message) => (
+                <Text key={message} style={styles.missingItem}>
+                  • {message}
+                </Text>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     padding: 24,
     paddingTop: 72,
+    paddingBottom: 48,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#666',
+    marginTop: 4,
   },
   sectionTitle: {
     fontSize: 18,
@@ -81,17 +164,45 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 10,
   },
+  input: {
+    borderWidth: 1,
+    borderColor: '#C8C8C8',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: '#C62828',
+  },
+  errorText: {
+    color: '#C62828',
+    fontSize: 13,
+    marginTop: 6,
+  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  debug: {
+  footer: {
     marginTop: 32,
+  },
+  missingBox: {
+    marginTop: 12,
     padding: 12,
-    backgroundColor: '#F2F2F2',
-    borderRadius: 8,
-    fontFamily: 'Courier',
-    fontSize: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFF8E1',
+  },
+  missingTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8D6E00',
+    marginBottom: 4,
+  },
+  missingItem: {
+    fontSize: 13,
+    color: '#8D6E00',
   },
 });
