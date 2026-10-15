@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   CATEGORY_OPTIONS,
   SYMPTOM_OPTIONS,
@@ -18,10 +18,12 @@ const STATUS_STYLES: Record<SyncStatus, { label: string; color: string; backgrou
 
 interface LogCardProps {
   log: LogEntry;
+  isSyncing?: boolean; // Şu an sunucuya gönderiliyor mu?
+  onRetry?: () => void; // "Tekrar Dene"ye basılınca
   onLongPress?: () => void;
 }
 
-export default function LogCard({ log, onLongPress }: LogCardProps) {
+export default function LogCard({ log, isSyncing = false, onRetry, onLongPress }: LogCardProps) {
   const status = STATUS_STYLES[log.status];
 
   return (
@@ -68,8 +70,31 @@ export default function LogCard({ log, onLongPress }: LogCardProps) {
       )}
 
       {/* Gönderim durumu */}
-      <View style={[styles.statusBadge, { backgroundColor: status.background }]}>
-        <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+      <View style={styles.statusRow}>
+        {isSyncing ? (
+          // Gönderiliyorsa: dönen animasyon
+          <View style={styles.syncing}>
+            <ActivityIndicator size="small" color="#0D47A1" />
+            <Text style={styles.syncingText}>Gönderiliyor...</Text>
+          </View>
+        ) : (
+          // Gönderilmiyorsa: durum etiketi
+          <View style={[styles.statusBadge, { backgroundColor: status.background }]}>
+            <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+          </View>
+        )}
+
+        {/* Sadece başarısızsa ve şu an gönderilmiyorsa "Tekrar Dene" */}
+        {log.status === 'failed' && !isSyncing && onRetry && (
+          <Pressable
+            onPress={onRetry}
+            accessibilityRole="button"
+            accessibilityLabel={`${log.foodName} kaydını tekrar gönder`}
+            style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.retryText}>↻ Tekrar Dene</Text>
+          </Pressable>
+        )}
       </View>
     </Pressable>
   );
@@ -141,6 +166,33 @@ const styles = StyleSheet.create({
   symptomTag: {
     backgroundColor: '#E3F2FD',
     color: '#0D47A1',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  syncing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  syncingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0D47A1',
+  },
+  retryButton: {
+    backgroundColor: '#C62828',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   statusBadge: {
     alignSelf: 'flex-start',

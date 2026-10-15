@@ -23,7 +23,7 @@ export default function PrimaryButton({
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       style={({ pressed }) => [
         styles.button,
-        isDisabled && styles.disabled,
+        disabled && !loading && styles.disabled, // Yüklenirken yeşil kalsın, sadece pasifken gri
         pressed && styles.pressed,
       ]}
     >

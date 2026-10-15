@@ -1,8 +1,7 @@
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,8 +11,10 @@ import {
   View,
 } from 'react-native';
 import Chip from '../components/Chip';
+import DevNetworkToggle from '../components/DevNetworkToggle';
 import PrimaryButton from '../components/PrimaryButton';
 import SeveritySelector from '../components/SeveritySelector';
+import StatusBanner, { BannerType } from '../components/StatusBanner';
 import { CATEGORY_OPTIONS, SYMPTOM_OPTIONS, TRIGGER_OPTIONS } from '../constants/options';
 import type { RootTabParamList } from '../navigation/TabNavigator';
 import { useLogStore } from '../store/useLogStore';
@@ -21,9 +22,18 @@ import { MealCategory, Severity, Symptom, TriggerTag } from '../types/log';
 import { toggleItem } from '../utils/toggleItem';
 import { FOOD_NAME_MAX_LENGTH, validateLogForm } from '../utils/validation';
 
+// Kaydet'ten sonra gösterilecek mesajın bilgisi
+interface BannerState {
+  type: BannerType;
+  message: string;
+  logId?: string; // Hata durumunda "Tekrar Dene" için hangi kayıt?
+  foodName?: string; // ve o kaydın adı
+}
+
 export default function LogScreen() {
   // Store'dan sadece ihtiyacımız olanları alıyoruz
   const addLog = useLogStore((state) => state.addLog);
+  const syncLog = useLogStore((state) => state.syncLog);
 
   // Ekranlar arası geçiş için
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
@@ -38,10 +48,29 @@ export default function LogScreen() {
   // Kullanıcı yemek adı kutusuna dokunup çıktı mı?
   const [foodNameTouched, setFoodNameTouched] = useState(false);
 
+  // Sunucuya gönderim durumu
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [banner, setBanner] = useState<BannerState | null>(null);
+
+  // Başarı mesajını 4 saniye sonra otomatik gizle
+  useEffect(() => {
+    if (banner?.type !== 'success') return;
+    const timer = setTimeout(() => setBanner(null), 4000);
+    return () => clearTimeout(timer); // Ekran kapanırsa zamanlayıcıyı temizle
+  }, [banner]);
+
   // Her çizimde formu yeniden kontrol et
   const errors = validateLogForm({ foodName, category, severity });
   const isValid = Object.keys(errors).length === 0;
   const showFoodNameError = foodNameTouched && errors.foodName !== undefined;
+
+  // Form tamamen boş mu? (Boşken "eksikler" kutusunu göstermeyelim)
+  const isPristine =
+    foodName === '' &&
+    category === null &&
+    triggers.length === 0 &&
+    symptoms.length === 0 &&
+    severity === null;
 
   function resetForm() {
     setFoodName('');
@@ -52,24 +81,40 @@ export default function LogScreen() {
     setFoodNameTouched(false);
   }
 
-  function handleSave() {
+  // Bir kaydı sunucuya gönderir ve sonucu mesaj olarak gösterir
+  async function sendToServer(logId: string, name: string) {
+    setIsSubmitting(true);
+    setBanner({ type: 'info', message: 'Sunucuya gönderiliyor...' });
+
+    const success = await syncLog(logId);
+
+    setIsSubmitting(false);
+    if (success) {
+      setBanner({ type: 'success', message: `"${name}" kaydedildi ve sunucuya gönderildi.` });
+    } else {
+      setBanner({
+        type: 'error',
+        message: `"${name}" telefona kaydedildi ama sunucuya gönderilemedi.`,
+        logId,
+        foodName: name,
+      });
+    }
+  }
+
+  async function handleSave() {
     // category ve severity'nin null olmadığını TypeScript'e de kanıtlıyoruz
-    if (!isValid || category === null || severity === null) return;
+    if (!isValid || category === null || severity === null || isSubmitting) return;
 
-    // Kaydı store'a ekle → store da otomatik olarak telefona (AsyncStorage) yazar
-    addLog({
-      foodName: foodName.trim(),
-      category,
-      triggers,
-      symptoms,
-      severity,
-    });
+    const name = foodName.trim();
 
-    Alert.alert('Kaydedildi ✅', `"${foodName.trim()}" telefonuna kaydedildi.`, [
-      { text: 'Tamam' },
-      { text: 'Geçmişe Git', onPress: () => navigation.navigate('History') },
-    ]);
+    // 1) ÖNCE telefona kaydet (offline-first: internet olmasa da veri kaybolmaz)
+    const entry = addLog({ foodName: name, category, triggers, symptoms, severity });
+
+    // Veri artık güvende, formu temizleyebiliriz
     resetForm();
+
+    // 2) SONRA sunucuya göndermeyi dene
+    await sendToServer(entry.id, name);
   }
 
   return (
@@ -144,9 +189,33 @@ export default function LogScreen() {
 
         {/* Kaydet */}
         <View style={styles.footer}>
-          <PrimaryButton title="Kaydet" onPress={handleSave} disabled={!isValid} />
+          {banner && (
+            <View style={styles.banner}>
+              <StatusBanner
+                type={banner.type}
+                message={banner.message}
+                actionLabel={
+                  banner.type === 'error' ? 'Tekrar Dene' : banner.type === 'success' ? 'Geçmiş' : undefined
+                }
+                onAction={() => {
+                  if (banner.type === 'error' && banner.logId) {
+                    void sendToServer(banner.logId, banner.foodName ?? '');
+                  } else if (banner.type === 'success') {
+                    navigation.navigate('History');
+                  }
+                }}
+              />
+            </View>
+          )}
 
-          {!isValid && (
+          <PrimaryButton
+            title="Kaydet"
+            onPress={handleSave}
+            disabled={!isValid}
+            loading={isSubmitting}
+          />
+
+          {!isValid && !isPristine && (
             <View style={styles.missingBox}>
               <Text style={styles.missingTitle}>Kaydetmek için:</Text>
               {Object.values(errors).map((message) => (
@@ -154,6 +223,13 @@ export default function LogScreen() {
                   • {message}
                 </Text>
               ))}
+            </View>
+          )}
+
+          {/* Sadece geliştirme modunda görünür, uygulama yayınlanınca kaybolur */}
+          {__DEV__ && (
+            <View style={styles.devTools}>
+              <DevNetworkToggle />
             </View>
           )}
         </View>
@@ -204,6 +280,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 32,
+  },
+  banner: {
+    marginBottom: 12,
+  },
+  devTools: {
+    marginTop: 24,
   },
   missingBox: {
     marginTop: 12,

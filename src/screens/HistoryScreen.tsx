@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import LogCard from '../components/LogCard';
 import { useLogStore } from '../store/useLogStore';
 import { LogEntry } from '../types/log';
@@ -9,6 +9,9 @@ export default function HistoryScreen() {
   const logs = useLogStore((state) => state.logs);
   const removeLog = useLogStore((state) => state.removeLog);
   const markAllSeen = useLogStore((state) => state.markAllSeen);
+  const syncingIds = useLogStore((state) => state.syncingIds);
+  const syncLog = useLogStore((state) => state.syncLog);
+  const retryFailedLogs = useLogStore((state) => state.retryFailedLogs);
 
   // Bu ekran her açıldığında (odaklandığında) rozeti sıfırla
   useFocusEffect(
@@ -23,6 +26,11 @@ export default function HistoryScreen() {
     [logs],
   );
 
+  // Gönderilemeyen kayıt sayısı
+  const failedCount = logs.filter(
+    (log) => log.status === 'failed' && !syncingIds.includes(log.id),
+  ).length;
+
   function confirmDelete(log: LogEntry) {
     Alert.alert('Kaydı sil', `"${log.foodName}" silinsin mi?`, [
       { text: 'Vazgeç', style: 'cancel' },
@@ -34,16 +42,40 @@ export default function HistoryScreen() {
     <FlatList
       data={sortedLogs}
       keyExtractor={(item) => item.id}
+      extraData={syncingIds} // syncingIds değişince listeyi yeniden çiz
       renderItem={({ item }) => (
-        <LogCard log={item} onLongPress={() => confirmDelete(item)} />
+        <LogCard
+          log={item}
+          isSyncing={syncingIds.includes(item.id)}
+          onRetry={() => void syncLog(item.id)}
+          onLongPress={() => confirmDelete(item)}
+        />
       )}
       contentContainerStyle={styles.list}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       ListHeaderComponent={
         sortedLogs.length > 0 ? (
-          <Text style={styles.header}>
-            {sortedLogs.length} kayıt · Silmek için karta basılı tut
-          </Text>
+          <View style={styles.headerBox}>
+            <Text style={styles.header}>
+              {sortedLogs.length} kayıt · Silmek için karta basılı tut
+            </Text>
+
+            {/* Başarısız kayıt varsa toplu "Tekrar Dene" uyarısı */}
+            {failedCount > 0 && (
+              <View style={styles.failedBox}>
+                <Text style={styles.failedText}>
+                  ⚠️ {failedCount} kayıt sunucuya gönderilemedi
+                </Text>
+                <Pressable
+                  onPress={retryFailedLogs}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.failedButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.failedButtonText}>Tümünü Tekrar Dene</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
         ) : null
       }
       ListEmptyComponent={
@@ -69,10 +101,41 @@ const styles = StyleSheet.create({
   separator: {
     height: 12,
   },
+  headerBox: {
+    gap: 10,
+    marginBottom: 12,
+  },
   header: {
     fontSize: 13,
     color: '#777',
-    marginBottom: 12,
+  },
+  failedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FFEBEE',
+  },
+  failedText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#B71C1C',
+  },
+  failedButton: {
+    backgroundColor: '#C62828',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  failedButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.7,
   },
   empty: {
     flex: 1,
