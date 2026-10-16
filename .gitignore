@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# screen recordings (only the GIF is committed)
+*.mov
+*.mp4
